@@ -10,14 +10,26 @@ if uploaded_file:
         df = pd.read_excel(uploaded_file, engine="openpyxl")
         df.columns = df.columns.str.strip().str.lower()
 
+        # Mapeo de columnas reales a las esperadas
+        mapeo_columnas = {
+            'nombre o sigla de la entidad': 'nombre entidad',
+            'fecha y hora de publicacion': 'fecha de publicación',
+            'nomenclatura': 'nomenclatura',
+            'objeto de contratación': 'objeto de contratación',
+            'descripción de objeto': 'descripción',
+            'vr / ve / cuantía de la contratación': 'vr/ve',
+            'moneda': 'moneda',
+            'versión seace': 'ficha de selección'
+        }
+
+        df.rename(columns=mapeo_columnas, inplace=True)
+
         columnas_requeridas = {
             'nombre entidad',
             'fecha de publicación',
             'nomenclatura',
             'objeto de contratación',
             'descripción',
-            'código snip',
-            'cui',
             'vr/ve',
             'moneda',
             'ficha de selección'
@@ -39,3 +51,4 @@ if uploaded_file:
 
     except Exception as e:
         st.error(f"Error al procesar el archivo: {e}")
+
