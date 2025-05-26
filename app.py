@@ -18,19 +18,19 @@ if uploaded_file:
         st.success(f"Archivo cargado con {len(df)} filas.")
 
         # Normalizar texto
-        df['Objeto de contratación'] = df['Objeto de contratación'].str.upper()
+        df['Objeto de Contratación'] = df['Objeto de Contratación'].str.upper()
         df['Tipo de procedimiento'] = df['Tipo de procedimiento'].str.upper()
 
         # Opciones de filtro
         objetos = ['BIEN', 'SERVICIO', 'OBRA', 'CONSULTORÍA DE OBRA']
         tipos = ['LP', 'LPE', 'LPP', 'LPN', 'CPS', 'CPC', 'CPP']
 
-        objeto_sel = st.multiselect("🛠 Objeto de contratación", objetos, default=objetos)
+        objeto_sel = st.multiselect("🛠 Objeto de Contratación", objetos, default=objetos)
         tipo_sel = st.multiselect("⚖ Tipo de selección", tipos, default=tipos)
 
         # Filtrar
         df_filtrado = df[
-            df['Objeto de contratación'].str.contains('|'.join(objeto_sel), na=False) &
+            df['Objeto de Contratación'].str.contains('|'.join(objeto_sel), na=False) &
             df['Tipo de procedimiento'].str.contains('|'.join(tipo_sel), na=False)
         ]
 
