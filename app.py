@@ -12,7 +12,7 @@ from datetime import datetime
 st.set_page_config(page_title="Validador SEACE", layout="wide")
 st.title("📊 Validador de Procesos SEACE")
 
-# Columnas requeridas mínimas (sin CUI, SNIP ni ficha de selección)
+# Columnas requeridas
 columnas_requeridas = {
     "Nombre o Sigla de la Entidad": "nombre entidad",
     "Fecha y Hora de Publicacion": "fecha de publicacion",
@@ -21,17 +21,16 @@ columnas_requeridas = {
     "Descripción de Objeto": "descripcion",
     "VR / VE / Cuantía de la contratación": "vr/ve",
     "Moneda": "moneda"
-    # Las columnas opcionales como CUI, Código SNIP y Ficha de Selección no se exigen
 }
 
-archivo = st.file_uploader("Sube tu archivo Excel (.xls o .xlsx)", type=["xlsx", "xls"])
+archivo = st.file_uploader("Sube tu archivo Excel (.xlsx)", type=["xlsx"])
 
 if archivo:
     try:
         df = pd.read_excel(archivo, engine="openpyxl")
         columnas_archivo = df.columns.tolist()
 
-        # Validación de columnas mínimas
+        # Validación de columnas
         faltantes = [col for col in columnas_requeridas if col not in columnas_archivo]
 
         if faltantes:
@@ -49,20 +48,22 @@ if archivo:
             with st.expander("🔍 Filtros"):
                 col1, col2, col3 = st.columns(3)
 
-                entidades = df["nombre entidad"].dropna().unique().tolist()
+                entidades = sorted(df["nombre entidad"].dropna().unique().tolist())
                 entidad_sel = col1.multiselect("Entidad", entidades, default=entidades)
 
-                objetos = df["objeto de contratacion"].dropna().unique().tolist()
+                objetos = sorted(df["objeto de contratacion"].dropna().unique().tolist())
                 objeto_sel = col2.multiselect("Objeto de Contratación", objetos, default=objetos)
 
                 fecha_min = df["fecha de publicacion"].min()
                 fecha_max = df["fecha de publicacion"].max()
                 fecha_rango = col3.date_input("Rango de Fechas", [fecha_min, fecha_max])
 
-                # Filtrar
+                # Aplicar filtros
+                if entidad_sel:
+                    df = df[df["nombre entidad"].isin(entidad_sel)]
+                if objeto_sel:
+                    df = df[df["objeto de contratacion"].isin(objeto_sel)]
                 df_filtrado = df[
-                    (df["nombre entidad"].isin(entidad_sel)) &
-                    (df["objeto de contratacion"].isin(objeto_sel)) &
                     (df["fecha de publicacion"] >= pd.to_datetime(fecha_rango[0])) &
                     (df["fecha de publicacion"] <= pd.to_datetime(fecha_rango[1]))
                 ]
@@ -87,16 +88,16 @@ if archivo:
             )
 
             # Botón para enviar por correo
-            def enviar_email_con_excel(df):
+            def enviar_email_con_excel(df, destinatario, asunto, mensaje):
                 output = BytesIO()
                 df.to_excel(output, index=False, engine='openpyxl')
                 output.seek(0)
 
                 msg = EmailMessage()
-                msg['Subject'] = 'Procesos SEACE validados'
+                msg['Subject'] = asunto
                 msg['From'] = os.getenv("EMAIL_USER")
-                msg['To'] = os.getenv("EMAIL_TO")
-                msg.set_content("Se adjunta el archivo validado de procesos SEACE.")
+                msg['To'] = destinatario
+                msg.set_content(mensaje)
 
                 msg.add_attachment(
                     output.read(),
@@ -113,8 +114,18 @@ if archivo:
                 st.success("📤 Archivo enviado exitosamente por correo.")
 
             with st.expander("📧 Enviar por correo"):
+                destinatario = st.text_input("Correo destinatario")
+                asunto = st.text_input("Asunto del correo", value="Procesos SEACE validados")
+                mensaje = st.text_area("Mensaje del correo", value="Se adjunta el archivo validado de procesos SEACE.")
+
                 if st.button("Enviar archivo por correo"):
-                    enviar_email_con_excel(df_filtrado)
+                    if destinatario and "@" in destinatario:
+                        try:
+                            enviar_email_con_excel(df_filtrado, destinatario, asunto, mensaje)
+                        except Exception as e:
+                            st.error(f"Error al enviar el correo: {e}")
+                    else:
+                        st.warning("⚠️ Ingresa un correo válido antes de enviar.")
 
     except Exception as e:
         st.error(f"Error al procesar el archivo: {e}")
