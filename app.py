@@ -116,17 +116,22 @@ if archivo:
                     server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASSWORD"))
                     server.send_message(msg)
 
-                st.success("📤 Archivo enviado exitosamente por correo.")
+                return True
 
             with st.expander("📧 Enviar por correo"):
-                destinatario = st.text_input("Correo destinatario")
-                asunto = st.text_input("Asunto del correo", value="Procesos SEACE validados")
-                mensaje = st.text_area("Mensaje del correo", value="Se adjunta el archivo validado de procesos SEACE.")
+                if 'email_enviado' not in st.session_state:
+                    st.session_state.email_enviado = False
+
+                destinatario = st.text_input("Correo destinatario", value="" if st.session_state.email_enviado else "")
+                asunto = st.text_input("Asunto del correo", value="" if st.session_state.email_enviado else "Procesos SEACE validados")
+                mensaje = st.text_area("Mensaje del correo", value="" if st.session_state.email_enviado else "Se adjunta el archivo validado de procesos SEACE.")
 
                 if st.button("Enviar archivo por correo"):
                     if destinatario and "@" in destinatario:
                         try:
-                            enviar_email_con_excel(df_filtrado, destinatario, asunto, mensaje)
+                            if enviar_email_con_excel(df_filtrado, destinatario, asunto, mensaje):
+                                st.session_state.email_enviado = True
+                                st.success("📤 Archivo enviado exitosamente por correo.")
                         except Exception as e:
                             st.error(f"Error al enviar el correo: {e}")
                     else:
