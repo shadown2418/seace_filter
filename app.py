@@ -1,5 +1,5 @@
 # Requiere instalación de dependencias:
-# pip install streamlit pandas openpyxl xlsxwriter xlrd
+# pip install streamlit pandas openpyxl xlsxwriter
 
 import streamlit as st
 import pandas as pd
@@ -12,7 +12,7 @@ from datetime import datetime
 st.set_page_config(page_title="Validador SEACE", layout="wide")
 st.title("📊 Validador de Procesos SEACE")
 
-# Columnas requeridas
+# Columnas requeridas mínimas (sin CUI, SNIP ni ficha de selección)
 columnas_requeridas = {
     "Nombre o Sigla de la Entidad": "nombre entidad",
     "Fecha y Hora de Publicacion": "fecha de publicacion",
@@ -20,25 +20,18 @@ columnas_requeridas = {
     "Objeto de Contratación": "objeto de contratacion",
     "Descripción de Objeto": "descripcion",
     "VR / VE / Cuantía de la contratación": "vr/ve",
-    "Moneda": "moneda",
-    "CUI": "cui",
-    "Código SNIP": "codigo snip",
-    "Ficha de Selección": "ficha de seleccion"  # opcional si se incluye
+    "Moneda": "moneda"
+    # Las columnas opcionales como CUI, Código SNIP y Ficha de Selección no se exigen
 }
 
-archivo = st.file_uploader("Sube tu archivo Excel (.xlsx o .xls)", type=["xlsx", "xls"])
+archivo = st.file_uploader("Sube tu archivo Excel (.xls o .xlsx)", type=["xlsx", "xls"])
 
 if archivo:
     try:
-        # Intentar leer con openpyxl o fallback a xlrd
-        try:
-            df = pd.read_excel(archivo, engine="openpyxl")
-        except:
-            df = pd.read_excel(archivo, engine="xlrd")
-
+        df = pd.read_excel(archivo, engine="openpyxl")
         columnas_archivo = df.columns.tolist()
 
-        # Validación de columnas
+        # Validación de columnas mínimas
         faltantes = [col for col in columnas_requeridas if col not in columnas_archivo]
 
         if faltantes:
