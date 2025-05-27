@@ -1,5 +1,5 @@
 # Requiere instalación de dependencias:
-# pip install streamlit pandas openpyxl xlsxwriter
+# pip install streamlit pandas openpyxl xlsxwriter xlrd
 
 import streamlit as st
 import pandas as pd
@@ -23,11 +23,16 @@ columnas_requeridas = {
     "Moneda": "moneda"
 }
 
-archivo = st.file_uploader("Sube tu archivo Excel (.xlsx)", type=["xlsx"])
+archivo = st.file_uploader("Sube tu archivo Excel (.xls o .xlsx)", type=["xls", "xlsx"])
 
 if archivo:
     try:
-        df = pd.read_excel(archivo, engine="openpyxl")
+        extension = archivo.name.split(".")[-1].lower()
+        if extension == "xls":
+            df = pd.read_excel(archivo, engine="xlrd")
+        else:
+            df = pd.read_excel(archivo, engine="openpyxl")
+
         columnas_archivo = df.columns.tolist()
 
         # Validación de columnas
