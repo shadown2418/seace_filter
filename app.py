@@ -121,21 +121,30 @@ if archivo:
             with st.expander("📧 Enviar por correo"):
                 if 'email_enviado' not in st.session_state:
                     st.session_state.email_enviado = False
+                if 'resetear_formulario' not in st.session_state:
+                    st.session_state.resetear_formulario = False
 
-                destinatario = st.text_input("Correo destinatario", value="" if st.session_state.email_enviado else "")
-                asunto = st.text_input("Asunto del correo", value="" if st.session_state.email_enviado else "Procesos SEACE validados")
-                mensaje = st.text_area("Mensaje del correo", value="" if st.session_state.email_enviado else "Se adjunta el archivo validado de procesos SEACE.")
+                if st.session_state.email_enviado:
+                    st.success("📤 Archivo enviado exitosamente por correo.")
+                    if st.button("✉️ Enviar a otro destinatario"):
+                        st.session_state.email_enviado = False
+                        st.experimental_rerun()
 
-                if st.button("Enviar archivo por correo"):
-                    if destinatario and "@" in destinatario:
-                        try:
-                            if enviar_email_con_excel(df_filtrado, destinatario, asunto, mensaje):
-                                st.session_state.email_enviado = True
-                                st.success("📤 Archivo enviado exitosamente por correo.")
-                        except Exception as e:
-                            st.error(f"Error al enviar el correo: {e}")
-                    else:
-                        st.warning("⚠️ Ingresa un correo válido antes de enviar.")
+                if not st.session_state.email_enviado:
+                    destinatario = st.text_input("Correo destinatario")
+                    asunto = st.text_input("Asunto del correo", value="Procesos SEACE validados")
+                    mensaje = st.text_area("Mensaje del correo", value="Se adjunta el archivo validado de procesos SEACE.")
+
+                    if st.button("Enviar archivo por correo"):
+                        if destinatario and "@" in destinatario:
+                            try:
+                                if enviar_email_con_excel(df_filtrado, destinatario, asunto, mensaje):
+                                    st.session_state.email_enviado = True
+                                    st.experimental_rerun()
+                            except Exception as e:
+                                st.error(f"Error al enviar el correo: {e}")
+                        else:
+                            st.warning("⚠️ Ingresa un correo válido antes de enviar.")
 
     except Exception as e:
         st.error(f"Error al procesar el archivo: {e}")
